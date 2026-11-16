@@ -25,7 +25,7 @@ export CPPFLAGS="-I$DEPS/include -I$DEPS/include/ncursesw"
 export LDFLAGS="-L$DEPS/lib"
 export LIBEVENT_CFLAGS="-I$DEPS/include" LIBEVENT_LIBS="-L$DEPS/lib -levent"
 export LIBNCURSES_CFLAGS="-I$DEPS/include/ncursesw" LIBNCURSES_LIBS="-L$DEPS/lib -lncursesw"
-"$ROOT/configure" --enable-utf8proc --enable-static --prefix=/usr || { grep -n -B2 -A12 "utf8proc_charwidth" config.log | tail -60; exit 1; }
+"$ROOT/configure" --enable-utf8proc --prefix=/usr || { grep -n -B2 -A12 "utf8proc_charwidth" config.log | tail -60; exit 1; }
 make -j"$JOBS"
 install -m755 tmux "$APPDIR/usr/bin/tmux"
 strip "$APPDIR/usr/bin/tmux"
