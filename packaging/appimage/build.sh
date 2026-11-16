@@ -14,9 +14,9 @@ curl -fsSL "https://github.com/libevent/libevent/releases/download/release-$LIBE
 curl -fsSL "https://ftp.gnu.org/gnu/ncurses/ncurses-$NCURSES.tar.gz" | tar xz
 curl -fsSL "https://github.com/JuliaStrings/utf8proc/archive/refs/tags/v$UTF8PROC.tar.gz" | tar xz
 (cd libevent-$LIBEVENT && ./configure --prefix="$DEPS" --disable-shared --enable-static --disable-openssl --disable-samples --with-pic && make -j"$JOBS" && make install)
-(cd ncurses-$NCURSES && ./configure --prefix="$DEPS" --without-shared --with-normal --without-debug --without-cxx --without-cxx-binding --without-ada --without-manpages --without-tests --enable-widec --with-terminfo-dirs=/etc/terminfo:/lib/terminfo:/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --disable-stripping && make -j"$JOBS" && make install)
+(cd ncurses-$NCURSES && ./configure --prefix="$DEPS" --without-shared --with-normal --without-debug --without-cxx --without-cxx-binding --without-ada --without-manpages --without-tests --enable-widec --with-terminfo-dirs=/etc/terminfo:/lib/terminfo:/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --disable-stripping && make -j"$JOBS" && make install.libs install.includes && make install.data DESTDIR="$ROOT/build/nc-stage")
 (cd utf8proc-$UTF8PROC && make -j"$JOBS" libutf8proc.a && install -D libutf8proc.a "$DEPS/lib/libutf8proc.a" && install -D utf8proc.h "$DEPS/include/utf8proc.h")
-cp -r "$DEPS/share/terminfo/." "$APPDIR/usr/share/terminfo/" 2>/dev/null || cp -r "$DEPS/share/terminfo"* "$APPDIR/usr/share/terminfo/"
+cp -r "$ROOT/build/nc-stage/usr/share/terminfo/." "$APPDIR/usr/share/terminfo/"
 cd "$ROOT"
 sh autogen.sh
 mkdir -p build/tmux && cd build/tmux
