@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=tmux
+Exec=tmux
+Icon=tmux
+Categories=System;TerminalEmulator;
+Terminal=true
