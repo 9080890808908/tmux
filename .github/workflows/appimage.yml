@@ -17,7 +17,7 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     container:
-      image: rockylinux:8.10
+      image: docker.io/rockylinux/rockylinux:8.10
     steps:
       - name: Install toolchain
         run: |
