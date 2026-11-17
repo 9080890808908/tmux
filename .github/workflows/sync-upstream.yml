@@ -22,6 +22,12 @@ jobs:
           git remote add upstream https://github.com/tmux/tmux.git
           git fetch upstream master --tags
           if git merge-base --is-ancestor upstream/master HEAD; then exit 0; fi
+          old=$(git rev-parse HEAD)
           git merge --no-edit upstream/master
-          git push origin HEAD:master --tags
-          gh workflow run appimage.yml --ref master
+          git push origin HEAD:master
+          tags=$(git tag --merged upstream/master --no-merged "$old")
+          for t in $tags; do
+            git push origin "refs/tags/$t"
+            gh workflow run appimage.yml --ref "$t"
+          done
+          [ -n "$tags" ] || gh workflow run appimage.yml --ref master
