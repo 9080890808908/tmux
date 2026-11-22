@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8-combined.c,v 1.11 2026/10/05 08:32:24 nicm Exp $ */
+/* $OpenBSD: utf8-combined.c,v 1.13 2026/11/21 12:33:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2023 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -103,7 +103,7 @@ utf8_regional_count(const struct utf8_data *ud)
 int
 utf8_should_combine(const struct utf8_data *with, const struct utf8_data *add)
 {
-	wchar_t	w, a;
+	int	w, a;
 
 	if (utf8_towc(with, &w) != UTF8_DONE)
 		return (0);
@@ -127,6 +127,8 @@ utf8_should_combine(const struct utf8_data *with, const struct utf8_data *add)
 	case 0x0270B:
 	case 0x0270C:
 	case 0x0270D:
+	case 0x1F3CB:
+	case 0x1F3CC:
 	case 0x1F44B:
 	case 0x1F44C:
 	case 0x1F44D:
@@ -155,6 +157,7 @@ utf8_should_combine(const struct utf8_data *with, const struct utf8_data *add)
 	case 0x1F486:
 	case 0x1F487:
 	case 0x1F4AA:
+	case 0x1F574:
 	case 0x1F575:
 	case 0x1F57A:
 	case 0x1F590:
