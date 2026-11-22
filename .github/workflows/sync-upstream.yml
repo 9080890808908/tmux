@@ -4,29 +4,17 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   actions: write
 jobs:
-  sync:
+  check:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Sync upstream
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@users.noreply.github.com
-          git clone --bare --filter=blob:none https://github.com/tmux/tmux.git /tmp/up
-          sha=$(git -C /tmp/up rev-parse master)
-          [ "$sha" = "$(cat .upstream-sha 2>/dev/null)" ] && exit 0
-          ver=$(git -C /tmp/up describe --tags --always master)
-          git ls-files | grep -v -e '^\.github/' -e '^packaging/appimage/' | xargs git rm -q
-          git -C /tmp/up archive master | tar -x --exclude=.github
-          echo "$sha" > .upstream-sha
-          echo "$ver" > .upstream-version
-          git add -A
-          git commit -qm "Sync upstream $ver"
-          git push origin HEAD:master
-          gh workflow run appimage.yml --ref master
+      - run: |
+          tag=$(git ls-remote --tags --refs https://github.com/tmux/tmux.git | awk '{sub("refs/tags/","",$2);print $2}' | grep -E '^[0-9]+\.[0-9]+[a-z]?$' | sort -V | tail -1)
+          [ -n "$tag" ] || exit 1
+          gh release view "$tag" >/dev/null 2>&1 && exit 0
+          gh workflow run appimage.yml -f tag="$tag"

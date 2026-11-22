@@ -1,8 +1,10 @@
 name: appimage
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: upstream tmux tag
+        required: true
 jobs:
   build:
     strategy:
@@ -23,9 +25,15 @@ jobs:
           dnf -y install gcc make automake autoconf bison flex pkgconf-pkg-config git curl file xz tar gzip patch squashfs-tools desktop-file-utils
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          repository: tmux/tmux
+          ref: ${{ inputs.tag }}
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+      - run: cp -r ci/packaging .
       - run: packaging/appimage/build.sh
+        env:
+          TMUX_VERSION: ${{ inputs.tag }}
       - name: Smoke test
         run: |
           ./tmux-*-${{ matrix.arch }}.AppImage --appimage-extract-and-run -V
@@ -40,7 +48,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -50,12 +57,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          tag=$(cat .upstream-version)
-          case "$tag" in *-g*) tag=nightly;; esac
-          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "$tag" --target "$GITHUB_SHA" $([ "$tag" = nightly ] && echo --prerelease)
-          rm -f dist/tmux-x86_64.AppImage dist/tmux-aarch64.AppImage
+          tag=${{ inputs.tag }}
           for f in dist/*.AppImage; do
             arch=$(echo "$f" | sed 's/.*-\([a-z0-9_]*\)\.AppImage/\1/')
-            cp "$f" "dist/tmux-$arch.AppImage"
+            mv "$f" "dist/tmux-$arch.AppImage"
           done
-          gh release upload "$tag" dist/tmux-x86_64.AppImage dist/tmux-aarch64.AppImage --clobber
+          gh release create "$tag" --title "tmux $tag" --notes "AppImage build of upstream tmux $tag" --target master dist/tmux-x86_64.AppImage dist/tmux-aarch64.AppImage

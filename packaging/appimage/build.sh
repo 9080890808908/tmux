@@ -35,5 +35,5 @@ install -m644 packaging/appimage/tmux.desktop "$APPDIR/tmux.desktop"
 install -m644 logo/tmux-logo-medium.png "$APPDIR/tmux.png"
 curl -fsSL -o build/appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage"
 chmod +x build/appimagetool
-VERSION=$(cat .upstream-version)
+VERSION=$TMUX_VERSION
 ARCH=$ARCH build/appimagetool --appimage-extract-and-run "$APPDIR" "tmux-$VERSION-$ARCH.AppImage"
