@@ -1,0 +1,61 @@
+name: appimage
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: docker.io/rockylinux/rockylinux:8.10
+    steps:
+      - name: Install toolchain
+        run: |
+          dnf -y install epel-release dnf-plugins-core
+          dnf config-manager --set-enabled powertools
+          dnf -y install gcc make automake autoconf bison flex pkgconf-pkg-config git curl file xz tar gzip patch squashfs-tools desktop-file-utils
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: packaging/appimage/build.sh
+      - name: Smoke test
+        run: |
+          ./tmux-*-${{ matrix.arch }}.AppImage --appimage-extract-and-run -V
+          TERM=xterm-256color ./tmux-*-${{ matrix.arch }}.AppImage --appimage-extract-and-run -f /dev/null new-session -d 'sleep 1' \; list-sessions
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tmux-${{ matrix.arch }}
+          path: tmux-*.AppImage
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag=$(cat .upstream-version)
+          case "$tag" in *-g*) tag=nightly;; esac
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "$tag" --target "$GITHUB_SHA" $([ "$tag" = nightly ] && echo --prerelease)
+          rm -f dist/tmux-x86_64.AppImage dist/tmux-aarch64.AppImage
+          for f in dist/*.AppImage; do
+            arch=$(echo "$f" | sed 's/.*-\([a-z0-9_]*\)\.AppImage/\1/')
+            cp "$f" "dist/tmux-$arch.AppImage"
+          done
+          gh release upload "$tag" dist/tmux-x86_64.AppImage dist/tmux-aarch64.AppImage --clobber

@@ -1,0 +1,4 @@
+#!/bin/sh
+HERE="$(dirname "$(readlink -f "$0")")"
+export TERMINFO_DIRS="$HERE/usr/share/terminfo${TERMINFO_DIRS:+:$TERMINFO_DIRS}:/etc/terminfo:/lib/terminfo:/usr/share/terminfo"
+exec "$HERE/usr/bin/tmux" "$@"
